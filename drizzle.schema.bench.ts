@@ -1,5 +1,5 @@
 import { bench } from "@ark/attest";
-import { relations } from "drizzle-orm";
+import { defineRelations } from "drizzle-orm";
 import {
   date,
   doublePrecision,
@@ -117,42 +117,40 @@ bench("drizzle schemas", () => {
       .references(() => products.id, { onDelete: "cascade" }),
   });
 
-  relations(orders, (r) => {
-    return {
-      details: r.many(details),
-      products: r.many(products),
-    };
-  });
+  const schema = {
+    customers,
+    employees,
+    orders,
+    suppliers,
+    products,
+    details,
+  };
 
-  relations(details, (r) => {
-    return {
-      order: r.one(orders, {
-        fields: [details.orderId],
-        references: [orders.id],
+  defineRelations(schema, (r) => ({
+    orders: {
+      details: r.many.details(),
+    },
+    details: {
+      order: r.one.orders({
+        from: r.details.orderId,
+        to: r.orders.id,
       }),
-      product: r.one(products, {
-        fields: [details.productId],
-        references: [products.id],
+      product: r.one.products({
+        from: r.details.productId,
+        to: r.products.id,
       }),
-    };
-  });
-
-  relations(employees, (r) => {
-    return {
-      recipient: r.one(employees, {
-        fields: [employees.recipientId],
-        references: [employees.id],
+    },
+    employees: {
+      recipient: r.one.employees({
+        from: r.employees.recipientId,
+        to: r.employees.id,
       }),
-    };
-  });
-
-  relations(products, (r) => {
-    return {
-      supplier: r.one(suppliers, {
-        fields: [products.supplierId],
-        references: [suppliers.id],
+    },
+    products: {
+      supplier: r.one.suppliers({
+        from: r.products.supplierId,
+        to: r.suppliers.id,
       }),
-      order: r.one(orders),
-    };
-  });
-}).types([41150, "instantiations"]);
+    },
+  }));
+}).types([5017, "instantiations"]);

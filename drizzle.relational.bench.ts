@@ -8,7 +8,7 @@
  */
 
 import { bench } from "@ark/attest";
-import { relations } from "drizzle-orm";
+import { defineRelations } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import {
   date,
@@ -126,45 +126,6 @@ const details = pgTable("order_details", {
     .references(() => products.id, { onDelete: "cascade" }),
 });
 
-const ordersRelations = relations(orders, (r) => {
-  return {
-    details: r.many(details),
-    products: r.many(products),
-  };
-});
-
-const detailsRelations = relations(details, (r) => {
-  return {
-    order: r.one(orders, {
-      fields: [details.orderId],
-      references: [orders.id],
-    }),
-    product: r.one(products, {
-      fields: [details.productId],
-      references: [products.id],
-    }),
-  };
-});
-
-const employeesRelations = relations(employees, (r) => {
-  return {
-    recipient: r.one(employees, {
-      fields: [employees.recipientId],
-      references: [employees.id],
-    }),
-  };
-});
-
-const productsRelations = relations(products, (r) => {
-  return {
-    supplier: r.one(suppliers, {
-      fields: [products.supplierId],
-      references: [suppliers.id],
-    }),
-    order: r.one(orders),
-  };
-});
-
 const schema = {
   customers,
   employees,
@@ -172,15 +133,39 @@ const schema = {
   suppliers,
   products,
   details,
-  ordersRelations,
-  detailsRelations,
-  employeesRelations,
-  productsRelations,
 };
+
+const relations = defineRelations(schema, (r) => ({
+  orders: {
+    details: r.many.details(),
+  },
+  details: {
+    order: r.one.orders({
+      from: r.details.orderId,
+      to: r.orders.id,
+    }),
+    product: r.one.products({
+      from: r.details.productId,
+      to: r.products.id,
+    }),
+  },
+  employees: {
+    recipient: r.one.employees({
+      from: r.employees.recipientId,
+      to: r.employees.id,
+    }),
+  },
+  products: {
+    supplier: r.one.suppliers({
+      from: r.products.supplierId,
+      to: r.suppliers.id,
+    }),
+  },
+}));
 
 // Type-safe database client with schema for relational queries
 // This enables the db.query.* API with full type safety and relationship support
-declare const drizzle: NodePgDatabase<typeof schema>;
+declare const drizzle: NodePgDatabase<typeof schema, typeof relations>;
 
 // trivial getAll expressions moved to baseline to match other benchmarks
 bench.baseline(async () => {
@@ -193,45 +178,61 @@ bench.baseline(async () => {
 
 bench("Drizzle RQB Customers: getInfo", async () => {
   await drizzle.query.customers.findFirst({
-    where: (customers, { eq }) => eq(customers.id, "id1"),
+    where: {
+      id: "id1",
+    },
   });
-}).types([731, "instantiations"]);
+}).types([364, "instantiations"]);
 
 bench("Drizzle RQB Customers: search", async () => {
   await drizzle.query.customers.findMany({
-    where: (customers, { ilike }) => ilike(customers.companyName, "%search1%"),
+    where: {
+      companyName: {
+        ilike: "%search1%",
+      },
+    },
   });
-}).types([341, "instantiations"]);
+}).types([282, "instantiations"]);
 
 bench("Drizzle RQB Employees: getInfo", async () => {
   await drizzle.query.employees.findFirst({
-    where: (employees, { eq }) => eq(employees.id, "id2"),
+    where: {
+      id: "id2",
+    },
     with: {
       recipient: true,
     },
   });
-}).types([1710, "instantiations"]);
+}).types([514, "instantiations"]);
 
 bench("Drizzle RQB Suppliers: getInfo", async () => {
   await drizzle.query.suppliers.findFirst({
-    where: (suppliers, { eq }) => eq(suppliers.id, "id3"),
+    where: {
+      id: "id3",
+    },
   });
-}).types([697, "instantiations"]);
+}).types([364, "instantiations"]);
 
 bench("Drizzle RQB Products: getInfo", async () => {
   await drizzle.query.products.findFirst({
-    where: (products, { eq }) => eq(products.id, "id4"),
+    where: {
+      id: "id4",
+    },
     with: {
       supplier: true,
     },
   });
-}).types([1626, "instantiations"]);
+}).types([514, "instantiations"]);
 
 bench("Drizzle RQB Products: search", async () => {
   await drizzle.query.products.findMany({
-    where: (products, { ilike }) => ilike(products.name, "%search2%"),
+    where: {
+      name: {
+        ilike: "%search2%",
+      },
+    },
   });
-}).types([341, "instantiations"]);
+}).types([298, "instantiations"]);
 
 bench("Drizzle RQB Orders: getAll", async () => {
   const result = await drizzle.query.orders.findMany({
@@ -258,11 +259,13 @@ bench("Drizzle RQB Orders: getAll", async () => {
       ),
     };
   });
-}).types([1441, "instantiations"]);
+}).types([955, "instantiations"]);
 
 bench("Drizzle RQB Orders: getById", async () => {
   const result = await drizzle.query.orders.findFirst({
-    where: (orders, { eq }) => eq(orders.id, "id5"),
+    where: {
+      id: "id5",
+    },
     with: {
       details: true,
     },
@@ -284,11 +287,13 @@ bench("Drizzle RQB Orders: getById", async () => {
       0,
     ),
   };
-}).types([1649, "instantiations"]);
+}).types([1022, "instantiations"]);
 
 bench("Drizzle RQB Orders: getInfo", async () => {
   await drizzle.query.orders.findMany({
-    where: (orders, { eq }) => eq(orders.id, "id6"),
+    where: {
+      id: "id6",
+    },
     with: {
       details: {
         with: {
@@ -297,4 +302,4 @@ bench("Drizzle RQB Orders: getInfo", async () => {
       },
     },
   });
-}).types([1950, "instantiations"]);
+}).types([459, "instantiations"]);
