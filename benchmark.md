@@ -29,7 +29,7 @@ Each approach has its own trade offs, but this data confirms that an _extremely_
 
 | File               | Drizzle  | Prisma   | diff (ms) | diff (%) |
 | ------------------ | -------- | -------- | --------- | -------- |
-| \*.schema.bench.ts | 161.12ms | 120.74ms | +40.38ms  | +33%     |
+| \*.schema.bench.ts | 338.39ms | 202.37ms | +136.02ms | +67%     |
 
 ## Queries
 
@@ -50,6 +50,6 @@ Each approach has its own trade offs, but this data confirms that an _extremely_
 
 ### Check Time
 
-| File              | Prisma | Drizzle RQB | Drizzle SQL | RQB vs Prisma | SQL vs Prisma |
-| ----------------- | ------ | ----------- | ----------- | ------------- | ------------- |
-| \*.query.bench.ts | 155.58ms  | 175.83ms | 204.21ms    | +13%          | +31%          |
+| File              | Prisma    | Drizzle RQB | Drizzle SQL | RQB vs Prisma | SQL vs Prisma |
+| ----------------- | --------- | ----------- | ----------- | ------------- | ------------- |
+| \*.query.bench.ts | 190.57ms  | 340.11ms    | 427.88ms    | +78%          | +125%         |
