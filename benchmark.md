@@ -23,37 +23,33 @@ Each approach has its own trade offs, but this data confirms that an _extremely_
 
 | File               | Drizzle | Prisma | diff (count) | diff (%) |
 | ------------------ | ------- | ------ | ------------ | -------- |
-| \*.schema.bench.ts | 41150   | 428    | +40722       | +9514%   |
+| \*.schema.bench.ts | 5017    | 428    | +4589        | +1072%   |
 
 ### Check Time
 
-| File               | Drizzle | Prisma | diff (ms) | diff (%) |
-| ------------------ | ------- | ------ | --------- | -------- |
-| \*.schema.bench.ts | 219ms   | 101ms  | +118ms    | +117%    |
+| File               | Drizzle  | Prisma   | diff (ms) | diff (%) |
+| ------------------ | -------- | -------- | --------- | -------- |
+| \*.schema.bench.ts | 338.39ms | 202.37ms | +136.02ms | +67%     |
 
 ## Queries
 
 ### Type Instantiations
 
-| Label              | Prisma | Drizzle RQB | Drizzle SQL | RQB vs Prisma | SQL vs Prisma |
-| ------------------ | ------ | ----------- | ----------- | ------------- | ------------- |
-| Customers: getInfo | 437    | 731         | 751         | +67%          | +72%          |
-| Customers: search  | 213    | 341         | 701         | +60%          | +229%         |
-| Employees: getInfo | 1050   | 1710        | 8448        | +63%          | +705%         |
-| Suppliers: getInfo | 429    | 697         | 699         | +62%          | +63%          |
-| Products: getInfo  | 900    | 1626        | 1753        | +81%          | +95%          |
-| Products: search   | 213    | 341         | 609         | +60%          | +186%         |
-| Orders: getAll     | 1538   | 1441        | 2179        | -6%           | +42%          |
-| Orders: getById    | 1542   | 1649        | 2385        | +7%           | +55%          |
-| Orders: getInfo    | 747    | 1950        | 2671        | +161%         | +258%         |
-| **Average**        | **785** | **1165**    | **2244**    | **+48%**      | **+186%**     |
-
-**Key Observations:**
-- **Drizzle RQB** performs significantly better than SQL-like queries (-48% fewer instantiations on average)
-- **Drizzle RQB** is +48% more expensive than Prisma, but much closer than SQL-like approach (+186% more expensive)
+| Label              | Prisma  | Drizzle RQB | Drizzle SQL | RQB vs Prisma | SQL vs Prisma |
+| ------------------ | ------- | ----------- | ----------- | ------------- | ------------- |
+| Customers: getInfo | 437     | 364         | 883         | -17%          | +102%         |
+| Customers: search  | 213     | 282         | 838         | +32%          | +293%         |
+| Employees: getInfo | 1050    | 514         | 2963        | -51%          | +182%         |
+| Suppliers: getInfo | 429     | 364         | 851         | -15%          | +98%          |
+| Products: getInfo  | 900     | 514         | 1779        | -43%          | +98%          |
+| Products: search   | 213     | 298         | 821         | +40%          | +285%         |
+| Orders: getAll     | 1538    | 955         | 2451        | -38%          | +59%          |
+| Orders: getById    | 1542    | 1022        | 2657        | -34%          | +72%          |
+| Orders: getInfo    | 747     | 459         | 2781        | -39%          | +272%         |
+| **Average**        | **785** | **530**     | **1780**    | **-32%**      | **+127%**     |
 
 ### Check Time
 
-| File              | Prisma | Drizzle RQB | Drizzle SQL | RQB vs Prisma | SQL vs Prisma |
-| ----------------- | ------ | ----------- | ----------- | ------------- | ------------- |
-| \*.query.bench.ts | 134ms  | 231ms       | 253ms       | +72%          | +89%          |
+| File              | Prisma    | Drizzle RQB | Drizzle SQL | RQB vs Prisma | SQL vs Prisma |
+| ----------------- | --------- | ----------- | ----------- | ------------- | ------------- |
+| \*.query.bench.ts | 190.57ms  | 340.11ms    | 427.88ms    | +78%          | +125%         |

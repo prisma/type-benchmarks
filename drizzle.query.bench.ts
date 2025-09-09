@@ -1,5 +1,5 @@
 import { bench } from "@ark/attest";
-import { asc, eq, ilike, relations, sql } from "drizzle-orm";
+import { asc, defineRelations, eq, ilike, sql } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import {
   alias,
@@ -120,44 +120,42 @@ export const details = pgTable("order_details", {
     .references(() => products.id, { onDelete: "cascade" }),
 });
 
-export const ordersRelations = relations(orders, (r) => {
-  return {
-    details: r.many(details),
-    products: r.many(products),
-  };
-});
+export const schema = {
+  customers,
+  employees,
+  orders,
+  suppliers,
+  products,
+  details,
+};
 
-export const detailsRelations = relations(details, (r) => {
-  return {
-    order: r.one(orders, {
-      fields: [details.orderId],
-      references: [orders.id],
+defineRelations(schema, (r) => ({
+  orders: {
+    details: r.many.details(),
+  },
+  details: {
+    order: r.one.orders({
+      from: r.details.orderId,
+      to: r.orders.id,
     }),
-    product: r.one(products, {
-      fields: [details.productId],
-      references: [products.id],
+    product: r.one.products({
+      from: r.details.productId,
+      to: r.products.id,
     }),
-  };
-});
-
-export const employeesRelations = relations(employees, (r) => {
-  return {
-    recipient: r.one(employees, {
-      fields: [employees.recipientId],
-      references: [employees.id],
+  },
+  employees: {
+    recipient: r.one.employees({
+      from: r.employees.recipientId,
+      to: r.employees.id,
     }),
-  };
-});
-
-export const productsRelations = relations(products, (r) => {
-  return {
-    supplier: r.one(suppliers, {
-      fields: [products.supplierId],
-      references: [suppliers.id],
+  },
+  products: {
+    supplier: r.one.suppliers({
+      from: r.products.supplierId,
+      to: r.suppliers.id,
     }),
-    order: r.one(orders),
-  };
-});
+  },
+}));
 
 // trivial getAll expressions moved to baseline, otherwise they incur
 // a base penalty of ~6000 instantiations
@@ -171,14 +169,14 @@ bench.baseline(async () => {
 
 bench("Customers: getInfo", async () => {
   await drizzle.select().from(customers).where(eq(customers.id, "id1"));
-}).types([751, "instantiations"]);
+}).types([883, "instantiations"]);
 
 bench("Customers: search", async () => {
   await drizzle
     .select()
     .from(customers)
     .where(ilike(customers.companyName, `search2`));
-}).types([701, "instantiations"]);
+}).types([838, "instantiations"]);
 
 bench("Employees: getInfo", async () => {
   const e2 = alias(employees, "recipient");
@@ -188,11 +186,11 @@ bench("Employees: getInfo", async () => {
     .from(employees)
     .leftJoin(e2, eq(e2.id, employees.recipientId))
     .where(eq(employees.id, "id2"));
-}).types([8448, "instantiations"]);
+}).types([2963, "instantiations"]);
 
 bench("Suppliers: getInfo", async () => {
   await drizzle.select().from(suppliers).where(eq(suppliers.id, "id3"));
-}).types([699, "instantiations"]);
+}).types([851, "instantiations"]);
 
 bench("Products: getInfo", async () => {
   await drizzle
@@ -200,11 +198,11 @@ bench("Products: getInfo", async () => {
     .from(products)
     .leftJoin(suppliers, eq(products.supplierId, suppliers.id))
     .where(eq(products.id, "id4"));
-}).types([1753, "instantiations"]);
+}).types([1779, "instantiations"]);
 
 bench("Products: search", async () => {
   await drizzle.select().from(products).where(ilike(products.name, `search1`));
-}).types([609, "instantiations"]);
+}).types([821, "instantiations"]);
 
 bench("Orders: getAll", async () => {
   await drizzle
@@ -227,7 +225,7 @@ bench("Orders: getAll", async () => {
     .leftJoin(details, eq(orders.id, details.orderId))
     .groupBy(orders.id)
     .orderBy(asc(orders.id));
-}).types([2179, "instantiations"]);
+}).types([2451, "instantiations"]);
 
 bench("Orders: getById", async () => {
   await drizzle
@@ -251,7 +249,7 @@ bench("Orders: getById", async () => {
     .where(eq(orders.id, "id5"))
     .groupBy(orders.id)
     .orderBy(asc(orders.id));
-}).types([2385, "instantiations"]);
+}).types([2657, "instantiations"]);
 
 bench("Orders: getInfo", async () => {
   await drizzle
@@ -260,4 +258,4 @@ bench("Orders: getInfo", async () => {
     .leftJoin(details, eq(orders.id, details.orderId))
     .leftJoin(products, eq(details.productId, products.id))
     .where(eq(orders.id, "id6"));
-}).types([2671, "instantiations"]);
+}).types([2781, "instantiations"]);
